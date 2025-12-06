@@ -1,0 +1,11 @@
+{
+  "domain": "easyplus_apex",
+  "name": "Easyplus Apex (Unofficial)",
+  "documentation": "", 
+  "issue_tracker": "", 
+  "codeowners": "https://github.com/Livyon",
+  "requirements": [], 
+  "iot_class": "local_push", 
+  "version": "0.1.2", 
+  "config_flow": true 
+}

@@ -1,0 +1,77 @@
+{
+"config": {
+    "step": {
+    "user": {
+        "title": "Connect to Easyplus (Unofficial)",
+        "description": "Enter the connection details for your Apex Controller.",
+        "data": {
+        "host": "IP Address",
+        "port": "Port",
+        "password": "Password"
+        }
+    }
+    },
+    "error": {
+    "cannot_connect": "Cannot connect.",
+    "invalid_auth": "Invalid password.",
+    "unknown": "Unexpected error.",
+    "already_configured": "Device is already configured."
+    },
+    "abort": {
+    "already_configured": "Device is already configured."
+    }
+},
+"options": {
+    "step": {
+    "init": {
+        "title": "Manage Easyplus Roller Shutters",
+        "description": "What do you want to do?",
+        "menu_options": {
+        "detect_cover_start": "Detect Roller Shutter (Wizard)",
+        "add_cover_manual": "Add manually",
+        "remove_cover": "Remove Roller Shutter"
+        }
+    },
+    "detect_cover_start": {
+        "title": "Start Detection",
+        "description": "Click 'Submit' and then IMMEDIATELY operate your roller shutter (briefly Open and briefly Close) via the wall switch.\n\nThe system will listen for activity for 10 seconds."
+    },
+    "detect_confirm": {
+        "title": "Roller Shutter Found!",
+        "description": "Activity detected on relays {r1} and {r2}. Verify and assign a name.",
+        "data": {
+        "cover_name": "Name (e.g. Kitchen)",
+        "address_direction": "Direction Relay ID",
+        "address_power": "Power Relay ID",
+        "travel_time": "Travel time (seconds)",
+        "invert_direction": "Invert direction?"
+        }
+    },
+    "detect_failed": {
+        "title": "Detection Failed",
+        "description": "No or insufficient activity detected. Ensure you physically operate the switch while the wizard is running."
+    },
+    "add_cover_manual": {
+        "title": "Add Manually",
+        "description": "Enter the relay addresses manually.",
+        "data": {
+        "cover_name": "Name",
+        "address_direction": "Direction Relay ID",
+        "address_power": "Power Relay ID",
+        "travel_time": "Travel time (seconds)",
+        "invert_direction": "Invert direction?"
+        }
+    },
+    "remove_cover": {
+        "title": "Remove Roller Shutter",
+        "description": "Select the roller shutter you want to remove.",
+        "data": {
+        "cover_name": "Choose Roller Shutter"
+        }
+    }
+    },
+    "error": {
+    "too_few_relays": "Too few relays detected (<2). Operate both Open and Close."
+    }
+}
+}
