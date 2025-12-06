@@ -20,7 +20,7 @@ Developed by **Core Automations**, this integration breathes new life into exist
 ### Option 1: HACS (Recommended)
 1.  Open **HACS** in Home Assistant.
 2.  Go to "Integrations" > Top right menu > "Custom repositories".
-3.  Add this URL: `https://github.com/JOUW_GITHUB_NAAM/ha-easyplus-apex`
+3.  Add this URL: `https://github.com/Livyon/ha-easyplus-apex.git`
 4.  Category: **Integration**.
 5.  Click **Download**.
 6.  Restart Home Assistant.
