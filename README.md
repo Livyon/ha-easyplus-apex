@@ -38,23 +38,12 @@ The easiest way to install and keep updated.
 2.  Copy it to your `custom_components` folder in Home Assistant.
 3.  Restart Home Assistant.
 
-## ⚙️ Getting Started
-
-1.  Go to **Settings** > **Devices & Services**.
-2.  Click **Add Integration** and search for **Easyplus Apex (Unofficial)**.
-3.  Enter your Controller details:
-    * **IP Address** (e.g., `192.168.1.146`)
-    * **Port** (Default: `2024`)
-    * **Password**
-4.  Click **Submit**.
-
-> **Success!** Your system is now connected. All relays and dimmers will appear in Home Assistant automatically.
-
 ---
 
-## 📚 Documentation
+## 📚 Configuration & Guide
 
-Need help configuring shutters or renaming lights?
+How to connect, rename your lights, and configure shutters?
+
 👉 **[Read the Full User Manual (MANUAL.md)](MANUAL.md)**
 
 ---
