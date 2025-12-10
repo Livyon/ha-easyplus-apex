@@ -91,7 +91,7 @@ class EasyplusCover(CoverEntity):
         self._config_entry_id = config_entry.entry_id
         self._direction_addr = direction_addr
         self._control_addr = control_addr
-        self._travel_time = max(1.0, travel_time)
+        self._travel_time = max(1.0, float(travel_time))
 
         # Bepaal open/dicht waarden op basis van invert optie
         if invert_direction:
