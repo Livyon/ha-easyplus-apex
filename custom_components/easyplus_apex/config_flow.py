@@ -10,7 +10,8 @@ from homeassistant.exceptions import HomeAssistantError
 from .const import (
     DOMAIN, CONF_HOST, CONF_PORT, CONF_PASSWORD,
     CONF_COVERS, CONF_COVER_NAME, CONF_ADDR_DIR, 
-    CONF_ADDR_POWER, CONF_TRAVEL_TIME, CONF_INVERT_DIR
+    CONF_ADDR_POWER, CONF_TRAVEL_TIME, CONF_INVERT_DIR,
+    CONF_XML_CONTENT
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -28,33 +29,27 @@ async def validate_input(host: str, port: int, password: str) -> dict[str, str]:
     reader = None
     writer = None
     try:
-        # Stap 1: Verbinden
         reader, writer = await asyncio.wait_for(
             asyncio.open_connection(host, port), timeout=10
         )
 
-        # Stap 2: Lees banner tot ">Ready"
         ready_received = False
         try:
-            for _ in range(10): # Max 10 lijnen lezen
+            for _ in range(10): 
                 line_bytes = await asyncio.wait_for(reader.readuntil(b'\n'), timeout=2)
                 line = line_bytes.decode('ascii').strip()
                 if line.lstrip().startswith(">Ready"):
                     ready_received = True
                     break
-
             if not ready_received:
                 raise CannotConnect("Did not receive '>Ready' prompt.")
-
         except Exception as e:
             raise CannotConnect(f"Error reading banner: {e}")
 
-        # Stap 3: Stuur wachtwoord
         pass_cmd = f"Pass {password}\n"
         writer.write(pass_cmd.encode('ascii'))
         await writer.drain()
 
-        # Stap 4: Verifieer succes
         try:
             await asyncio.wait_for(reader.read(1), timeout=0.5)
         except asyncio.TimeoutError:
@@ -80,12 +75,18 @@ async def validate_input(host: str, port: int, password: str) -> dict[str, str]:
 class EasyplusApexConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Easyplus Apex System."""
     VERSION = 1
+    
+    def __init__(self):
+        """Initialize flow."""
+        self.login_data = {} # Tijdelijke opslag voor login gegevens
+        self.title = ""
 
     @staticmethod
     @callback
     def async_get_options_flow(config_entry):
         return EasyplusOptionsFlowHandler(config_entry)
 
+    # --- STAP 1: Login ---
     async def async_step_user(self, user_input: dict[str, any] | None = None) -> ConfigFlowResult:
         errors: dict[str, str] = {}
         if user_input is not None:
@@ -99,7 +100,12 @@ class EasyplusApexConfigFlow(ConfigFlow, domain=DOMAIN):
                     user_input[CONF_PORT],
                     user_input[CONF_PASSWORD],
                 )
-                return self.async_create_entry(title=info["title"], data=user_input)
+                # Validatie gelukt! Sla data tijdelijk op.
+                self.login_data = user_input
+                self.title = info["title"]
+                
+                # Ga nu naar de keuze: XML of Auto?
+                return await self.async_step_choice()
 
             except CannotConnect:
                 errors["base"] = "cannot_connect"
@@ -113,51 +119,96 @@ class EasyplusApexConfigFlow(ConfigFlow, domain=DOMAIN):
             step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
         )
 
+    # --- STAP 2: Keuze Menu ---
+    async def async_step_choice(self, user_input=None) -> ConfigFlowResult:
+        """Laat de gebruiker kiezen tussen Auto-Discovery of XML."""
+        return self.async_show_menu(
+            step_id="choice",
+            menu_options=["auto_discovery", "upload_xml"]
+        )
+
+    # --- STAP 3A: Auto Discovery (Direct afronden) ---
+    async def async_step_auto_discovery(self, user_input=None) -> ConfigFlowResult:
+        """Maak entry aan zonder XML data."""
+        return self.async_create_entry(title=self.title, data=self.login_data)
+
+    # --- STAP 3B: XML Uploaden ---
+    async def async_step_upload_xml(self, user_input=None) -> ConfigFlowResult:
+        """Vraag om XML en maak dan entry aan."""
+        if user_input is not None:
+            # We hebben login data (self.login_data) EN XML data (user_input)
+            # De XML data stoppen we in de 'options' van de entry.
+            return self.async_create_entry(
+                title=self.title, 
+                data=self.login_data,
+                options={CONF_XML_CONTENT: user_input[CONF_XML_CONTENT]}
+            )
+
+        return self.async_show_form(
+            step_id="upload_xml",
+            data_schema=vol.Schema({
+                vol.Required(CONF_XML_CONTENT): str, 
+            }),
+            description_placeholders={
+                "info": "Open config.xml, kopieer alles en plak hier."
+            }
+        )
 
 class EasyplusOptionsFlowHandler(OptionsFlow):
-    """Handle Easyplus options (Manage Covers with Detection)."""
+    """Handle Easyplus options (Manage Covers with Detection & XML)."""
 
     def __init__(self, config_entry):
-        # AANGEPAST: We gebruiken 'self.entry' in plaats van 'self.config_entry'
-        # om conflicten met de base class property te vermijden.
         self.entry = config_entry 
         self.covers = self.entry.options.get(CONF_COVERS, [])
-        self.detected_ids = []
 
     async def async_step_init(self, user_input=None) -> ConfigFlowResult:
         """Start menu."""
         return self.async_show_menu(
             step_id="init",
-            menu_options=["detect_cover_start", "add_cover_manual", "remove_cover"]
+            menu_options=[
+                "import_xml_config",
+                "detect_cover_start", 
+                "add_cover_manual", 
+                "remove_cover"
+            ]
+        )
+
+    # --- OPTIES: XML IMPORT (Later toevoegen/updaten) ---
+    async def async_step_import_xml_config(self, user_input=None) -> ConfigFlowResult:
+        if user_input is not None:
+            # Update de bestaande options
+            return self.async_create_entry(
+                title="XML Imported", 
+                data={CONF_XML_CONTENT: user_input[CONF_XML_CONTENT]}
+            )
+
+        return self.async_show_form(
+            step_id="import_xml_config",
+            data_schema=vol.Schema({vol.Required(CONF_XML_CONTENT): str}),
+            description_placeholders={"info": "Plak nieuwe XML content."}
         )
 
     # --- WIZARD STAP 1: Instructie ---
     async def async_step_detect_cover_start(self, user_input=None) -> ConfigFlowResult:
         if user_input is not None:
-            # Gebruiker klikt op 'Verzenden' -> Start luisteren
             return await self.async_step_detect_listening()
 
         return self.async_show_form(
             step_id="detect_cover_start",
             description_placeholders={},
-            data_schema=vol.Schema({}), # Alleen een knop
+            data_schema=vol.Schema({}), 
             last_step=False
         )
 
     # --- WIZARD STAP 2: Luisteren (10 sec) ---
     async def async_step_detect_listening(self, user_input=None) -> ConfigFlowResult:
-        # Gebruik self.entry.entry_id
         coordinator = self.hass.data[DOMAIN][self.entry.entry_id]
-        
-        # Dit blokkeert de UI voor 10 seconden terwijl de gebruiker op de knop duwt
         changed_relays = await coordinator.detect_activity(duration=10)
-        
         self.detected_ids = sorted(list(changed_relays))
 
         if len(self.detected_ids) < 2:
             return self.async_show_form(step_id="detect_failed", errors={"base": "too_few_relays"})
         
-        # Als we meer dan 2 vinden, pakken we de eerste 2. 
         return await self.async_step_detect_confirm()
 
     # --- WIZARD STAP 3: Bevestigen ---
@@ -170,7 +221,7 @@ class EasyplusOptionsFlowHandler(OptionsFlow):
                 CONF_COVER_NAME: user_input[CONF_COVER_NAME],
                 CONF_ADDR_DIR: int(user_input[CONF_ADDR_DIR]),
                 CONF_ADDR_POWER: int(user_input[CONF_ADDR_POWER]),
-                CONF_TRAVEL_TIME: user_input[CONF_TRAVEL_TIME],
+                CONF_TRAVEL_TIME: float(user_input[CONF_TRAVEL_TIME]),
                 CONF_INVERT_DIR: user_input[CONF_INVERT_DIR]
             }
             self.covers.append(new_cover)
@@ -183,7 +234,7 @@ class EasyplusOptionsFlowHandler(OptionsFlow):
                 vol.Required(CONF_COVER_NAME): str,
                 vol.Required(CONF_ADDR_DIR, default=r1): int,
                 vol.Required(CONF_ADDR_POWER, default=r2): int,
-                vol.Required(CONF_TRAVEL_TIME, default=25.0): float,
+                vol.Required(CONF_TRAVEL_TIME, default=25.0): vol.Coerce(float),
                 vol.Optional(CONF_INVERT_DIR, default=False): bool,
             })
         )
@@ -191,9 +242,10 @@ class EasyplusOptionsFlowHandler(OptionsFlow):
     async def async_step_detect_failed(self, user_input=None) -> ConfigFlowResult:
         return await self.async_step_init()
 
-    # --- HANDMATIG (Fallback) ---
+    # --- HANDMATIG ---
     async def async_step_add_cover_manual(self, user_input=None) -> ConfigFlowResult:
         if user_input is not None:
+            user_input[CONF_TRAVEL_TIME] = float(user_input[CONF_TRAVEL_TIME])
             self.covers.append(user_input)
             return self.async_create_entry(title="", data={CONF_COVERS: self.covers})
 
@@ -203,7 +255,7 @@ class EasyplusOptionsFlowHandler(OptionsFlow):
                 vol.Required(CONF_COVER_NAME): str,
                 vol.Required(CONF_ADDR_DIR): int,
                 vol.Required(CONF_ADDR_POWER): int,
-                vol.Required(CONF_TRAVEL_TIME, default=25.0): float,
+                vol.Required(CONF_TRAVEL_TIME, default=25.0): vol.Coerce(float),
                 vol.Optional(CONF_INVERT_DIR, default=False): bool,
             })
         )
