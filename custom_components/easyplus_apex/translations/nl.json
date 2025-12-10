@@ -3,42 +3,67 @@
     "step": {
     "user": {
         "title": "Verbind met Easyplus (Unofficial)",
-        "description": "Voer de verbindingsgegevens in voor je Apex Controller.",
+        "description": "Voer eerst de verbindingsgegevens in.",
         "data": {
         "host": "IP Adres",
         "port": "Poort",
         "password": "Wachtwoord"
+        }
+    },
+    "choice": {
+        "title": "Configuratie Methode",
+        "description": "Verbinding geslaagd! Hoe wilt u de entiteiten instellen?",
+        "menu_options": {
+        "auto_discovery": "Auto-Discovery (Ik heb geen XML)",
+        "upload_xml": "Importeer XML Bestand (Aanbevolen)"
+        }
+    },
+    "upload_xml": {
+        "title": "Plak XML Inhoud",
+        "description": "Open uw 'config.xml' bestand, kopieer alles en plak het hieronder.",
+        "data": {
+        "xml_content": "XML Inhoud"
         }
     }
     },
     "error": {
     "cannot_connect": "Kan niet verbinden.",
     "invalid_auth": "Ongeldig wachtwoord.",
-    "unknown": "Onverwachte fout.",
-    "already_configured": "Apparaat is al geconfigureerd."
+    "unknown": "Fout."
     },
     "abort": {
-    "already_configured": "Apparaat is al geconfigureerd."
+    "already_configured": "Al geconfigureerd."
     }
 },
 "options": {
     "step": {
     "init": {
-        "title": "Beheer Easyplus Rolluiken",
-        "description": "Wat wil je doen?",
+        "title": "Beheer Easyplus",
         "menu_options": {
+        "import_xml_config": "Importeer XML Config (Update)",
         "detect_cover_start": "Detecteer Rolluik (Wizard)",
-        "add_cover_manual": "Handmatig toevoegen",
+        "add_cover_manual": "Handmatig Toevoegen",
         "remove_cover": "Verwijder Rolluik"
+        }
+    },
+    "import_xml_config": {
+        "title": "Importeer XML Configuratie",
+        "description": "Plak hier de nieuwe XML inhoud om de configuratie bij te werken.",
+        "data": {
+        "xml_content": "XML Inhoud"
         }
     },
     "detect_cover_start": {
         "title": "Start Detectie",
-        "description": "Klik op 'Verzenden' en bedien daarna DIRECT uw rolluik (een stukje Open en een stukje Dicht) via de muurschakelaar.\n\nHet systeem luistert 10 seconden naar activiteit."
+        "description": "Klik op 'Verzenden' en bedien daarna DIRECT uw rolluik (even Open en even Dicht) via de muurschakelaar.\n\nHet systeem luistert 10 seconden naar activiteit."
+    },
+    "detect_listening": {
+        "title": "Aan het luisteren...",
+        "description": "Bedien nu uw rolluikschakelaar!"
     },
     "detect_confirm": {
         "title": "Rolluik Gevonden!",
-        "description": "Activiteit gedetecteerd op relais {r1} en {r2}. Controleer en geef een naam.",
+        "description": "Activiteit gezien op relais {r1} en {r2}. Controleer en geef een naam.",
         "data": {
         "cover_name": "Naam (bv. Keuken)",
         "address_direction": "Richting Relais ID",
@@ -48,30 +73,26 @@
         }
     },
     "detect_failed": {
-        "title": "Detectie Mislukt",
-        "description": "Geen of onvoldoende activiteit gedetecteerd. Zorg dat u de schakelaar fysiek bedient terwijl de wizard draait."
+        "title": "Mislukt",
+        "description": "Geen activiteit gezien. Probeer opnieuw."
     },
     "add_cover_manual": {
-        "title": "Handmatig Toevoegen",
-        "description": "Voer de relais adressen handmatig in.",
+        "title": "Handmatig",
         "data": {
         "cover_name": "Naam",
-        "address_direction": "Richting Relais ID",
-        "address_power": "Stroom Relais ID",
-        "travel_time": "Looptijd (seconden)",
-        "invert_direction": "Richting omkeren?"
+        "address_direction": "Richting ID",
+        "address_power": "Stroom ID",
+        "travel_time": "Looptijd",
+        "invert_direction": "Omkeren?"
         }
     },
     "remove_cover": {
-        "title": "Verwijder Rolluik",
-        "description": "Selecteer het rolluik dat je wilt verwijderen.",
-        "data": {
-        "cover_name": "Kies Rolluik"
-        }
+        "title": "Verwijderen",
+        "data": { "cover_name": "Selecteer Rolluik" }
     }
     },
     "error": {
-    "too_few_relays": "Te weinig relais gedetecteerd (<2). Bedien zowel Open als Dicht."
+    "too_few_relays": "Te weinig relais gezien (<2). Bedien zowel Open als Dicht."
     }
 }
 }
