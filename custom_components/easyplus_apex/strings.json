@@ -3,11 +3,26 @@
     "step": {
       "user": {
         "title": "Verbind met Easyplus (Unofficial)",
-        "description": "Voer de verbindingsgegevens in.",
+        "description": "Voer eerst de verbindingsgegevens in.",
         "data": {
           "host": "IP Adres",
           "port": "Poort",
           "password": "Wachtwoord"
+        }
+      },
+      "choice": {
+        "title": "Configuratie Methode",
+        "description": "Verbinding geslaagd! Hoe wilt u de entiteiten instellen?",
+        "menu_options": {
+          "auto_discovery": "Auto-Discovery (Ik heb geen XML)",
+          "upload_xml": "Importeer XML Bestand (Aanbevolen)"
+        }
+      },
+      "upload_xml": {
+        "title": "Plak XML Inhoud",
+        "description": "Open uw 'config.xml' bestand, kopieer alles en plak het hieronder.",
+        "data": {
+          "xml_content": "XML Inhoud"
         }
       }
     },
@@ -23,11 +38,19 @@
   "options": {
     "step": {
       "init": {
-        "title": "Beheer Rolluiken",
+        "title": "Beheer Easyplus",
         "menu_options": {
+          "import_xml_config": "Importeer XML Config (Update)",
           "detect_cover_start": "Detecteer Rolluik (Wizard)",
           "add_cover_manual": "Handmatig Toevoegen",
           "remove_cover": "Verwijder Rolluik"
+        }
+      },
+      "import_xml_config": {
+        "title": "Importeer XML Configuratie",
+        "description": "Plak hier de nieuwe XML inhoud om de configuratie bij te werken.",
+        "data": {
+          "xml_content": "XML Inhoud"
         }
       },
       "detect_cover_start": {
