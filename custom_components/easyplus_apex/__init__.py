@@ -23,7 +23,6 @@ PLATFORMS: list[Platform] = [Platform.SWITCH, Platform.LIGHT, Platform.COVER]
 _LOGGER = logging.getLogger(__name__)
 
 # Regex om "rommel" namen te herkennen uit de XML
-# Matcht: "Re +0", "relay 85", "Ch 2", "1", "In 0"
 JUNK_NAME_PATTERN = re.compile(r"^(Re \+\d+|relay \d+|Ch \d+|In \d+|\d+)$", re.IGNORECASE)
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -56,9 +55,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
-    # 4. INITIAL STATE FETCH (De "Finishing Touch")
-    # Alleen als we in Strict Mode (XML) zitten, vragen we actief alle statussen op.
-    # Zitten we in Auto-Discovery mode? Dan doen we NIETS en wachten we tot de gebruiker een knop indrukt.
+    # 4. INITIAL STATE FETCH
     if entry.options.get(CONF_STRICT_MODE, False):
         _LOGGER.debug("Strict Mode active: Fetching initial states...")
         await asyncio.sleep(1)
@@ -69,14 +66,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return True
 
 async def parse_and_apply_xml(hass: HomeAssistant, entry: ConfigEntry):
-    """Parse de XML, filter rommel, en scheid Switches van Dimmers."""
+    """Parse de XML, filter rommel, en scheid Switches van Dimmers (zonder dubbels)."""
     xml_content = entry.options[CONF_XML_CONTENT]
     new_options = dict(entry.options)
     
     naming_map = {}
     covers = []
-    valid_switches = []
-    valid_dimmers = []
+    
+    # AANGEPAST: Gebruik 'set' in plaats van 'list' om dubbele adressen te voorkomen
+    valid_switches = set()
+    valid_dimmers = set()
     
     try:
         root = ET.fromstring(xml_content)
@@ -97,32 +96,37 @@ async def parse_and_apply_xml(hass: HomeAssistant, entry: ConfigEntry):
                 # FILTER: Is het rommel?
                 is_junk = JUNK_NAME_PATTERN.match(name)
                 
-                # Uitzondering: Rolluiken mogen rommel-namen hebben, anders vinden we ze niet.
+                # Uitzondering: Rolluiken mogen rommel-namen hebben
                 if is_junk and item_type != 'shutter':
                     continue
 
                 naming_map[str(address)] = name
 
                 if item_type == 'shutter':
-                    covers.append({
-                        CONF_COVER_NAME: name,
-                        CONF_ADDR_DIR: address,
-                        CONF_ADDR_POWER: address + 1,
-                        CONF_TRAVEL_TIME: 25.0,
-                        "origin": "xml"
-                    })
+                    # Rolluiken checken we handmatig op dubbels in de lijst
+                    # (Sets werken niet direct met dicts, dus eenvoudige check)
+                    existing_ids = [c[CONF_ADDR_DIR] for c in covers]
+                    if address not in existing_ids:
+                        covers.append({
+                            CONF_COVER_NAME: name,
+                            CONF_ADDR_DIR: address,
+                            CONF_ADDR_POWER: address + 1,
+                            CONF_TRAVEL_TIME: 25.0,
+                            "origin": "xml"
+                        })
                 elif tag == 'dim':
-                    valid_dimmers.append(address)
+                    valid_dimmers.add(address) # .add() voor sets
                 elif tag == 'digout':
-                    valid_switches.append(address)
+                    valid_switches.add(address) # .add() voor sets
                         
             except (ValueError, TypeError):
                 continue
 
         new_options[CONF_NAMING_MAP] = naming_map
         new_options[CONF_COVERS] = covers
-        new_options[CONF_XML_SWITCHES] = valid_switches
-        new_options[CONF_XML_DIMMERS] = valid_dimmers
+        # AANGEPAST: Converteer sets terug naar lijsten voor opslag in JSON
+        new_options[CONF_XML_SWITCHES] = list(valid_switches)
+        new_options[CONF_XML_DIMMERS] = list(valid_dimmers)
         new_options[CONF_STRICT_MODE] = True
         new_options.pop(CONF_XML_CONTENT)
 
