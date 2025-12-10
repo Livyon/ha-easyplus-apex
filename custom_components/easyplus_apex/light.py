@@ -1,4 +1,4 @@
-"""Platform for Easyplus Apex light integration (Auto-Discovery)."""
+"""Platform for Easyplus Apex light integration (Smart XML Support)."""
 import logging
 from typing import Any
 
@@ -8,7 +8,12 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN
+from .const import (
+    DOMAIN, 
+    CONF_NAMING_MAP,
+    CONF_STRICT_MODE,
+    CONF_XML_DIMMERS # Nieuw
+)
 from .coordinator import EasyplusCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -25,27 +30,42 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up Easyplus Apex light platform with Auto-Discovery."""
+    """Set up dimmers using the filtered XML list."""
     coordinator: EasyplusCoordinator = hass.data[DOMAIN][entry.entry_id]
+
+    naming_map = entry.options.get(CONF_NAMING_MAP, {})
+    strict_mode = entry.options.get(CONF_STRICT_MODE, False)
+    xml_dimmers = entry.options.get(CONF_XML_DIMMERS, [])
 
     @callback
     def async_add_dimmer(address: int):
-        """Maak een dimmer entiteit aan wanneer ontdekt."""
-        _LOGGER.info("Creating light entity for address %s", address)
-        name = f"Apex Dimmer {address}"
+        # STRICT MODE LOGICA
+        if strict_mode:
+            # Alleen aanmaken als het in de goedgekeurde dimmer-lijst staat
+            if address not in xml_dimmers:
+                return
+
+        xml_name = naming_map.get(str(address))
+        if xml_name:
+            name = xml_name
+        else:
+            name = f"Apex Dimmer {address}"
+
         async_add_entities([EasyplusLight(coordinator, entry, address, name)])
 
-    # Registreer de callback
-    coordinator.listen_for_new_dimmers(async_add_dimmer)
-
-    # Check reeds ontdekte
-    for address in coordinator.known_dimmers:
-        async_add_dimmer(address)
+    # Als we XML gebruiken, itereren we over de dimmer lijst
+    if strict_mode and xml_dimmers:
+        for address in xml_dimmers:
+            async_add_dimmer(address)
+    else:
+        # Fallback Auto-Discovery
+        coordinator.listen_for_new_dimmers(async_add_dimmer)
+        for address in coordinator.known_dimmers:
+            async_add_dimmer(address)
 
 
 class EasyplusLight(LightEntity):
     """Representation of an Easyplus Apex Dimmer."""
-
     _attr_should_poll = False
     _attr_has_entity_name = True
     _attr_supported_color_modes = {ColorMode.BRIGHTNESS}
@@ -67,7 +87,6 @@ class EasyplusLight(LightEntity):
         val = self.coordinator.get_dimmer_state(self._address)
         if val is None or val < EPC_MIN:
             return None
-        # Convert EPC to HA
         return int(HA_MIN + (val - EPC_MIN) * ((HA_MAX - HA_MIN) / (EPC_MAX - EPC_MIN)))
 
     @property
@@ -77,7 +96,6 @@ class EasyplusLight(LightEntity):
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         ha_bri = kwargs.get(ATTR_BRIGHTNESS, 255)
-        # Convert HA to EPC
         epc_bri = int(EPC_MIN + (ha_bri - HA_MIN) * ((EPC_MAX - EPC_MIN) / (HA_MAX - HA_MIN)))
         await self.coordinator.async_send_command(f"SetDimmer {self._address},{epc_bri},{DEFAULT_SLOPE}")
 
