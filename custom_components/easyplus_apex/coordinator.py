@@ -198,3 +198,4 @@ class EasyplusCoordinator:
     async def stop(self):
         self._shutdown_requested = True
         await self.disconnect()
+        await asyncio.sleep(1.0)
