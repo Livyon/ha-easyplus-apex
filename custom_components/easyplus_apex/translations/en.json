@@ -3,41 +3,66 @@
     "step": {
     "user": {
         "title": "Connect to Easyplus (Unofficial)",
-        "description": "Enter the connection details for your Apex Controller.",
+        "description": "First, enter the connection details.",
         "data": {
         "host": "IP Address",
         "port": "Port",
         "password": "Password"
+        }
+    },
+    "choice": {
+        "title": "Configuration Method",
+        "description": "Connection successful! How would you like to configure entities?",
+        "menu_options": {
+        "auto_discovery": "Auto-Discovery (I have no XML)",
+        "upload_xml": "Import XML File (Recommended)"
+        }
+    },
+    "upload_xml": {
+        "title": "Paste XML Content",
+        "description": "Open your 'config.xml' file, copy everything, and paste it below.",
+        "data": {
+        "xml_content": "XML Content"
         }
     }
     },
     "error": {
     "cannot_connect": "Cannot connect.",
     "invalid_auth": "Invalid password.",
-    "unknown": "Unexpected error.",
-    "already_configured": "Device is already configured."
+    "unknown": "Error."
     },
     "abort": {
-    "already_configured": "Device is already configured."
+    "already_configured": "Already configured."
     }
 },
 "options": {
     "step": {
     "init": {
-        "title": "Manage Easyplus Roller Shutters",
-        "description": "What do you want to do?",
+        "title": "Manage Easyplus",
         "menu_options": {
-        "detect_cover_start": "Detect Roller Shutter (Wizard)",
-        "add_cover_manual": "Add manually",
-        "remove_cover": "Remove Roller Shutter"
+        "import_xml_config": "Import XML Config (Update)",
+        "detect_cover_start": "Detect Cover (Wizard)",
+        "add_cover_manual": "Add Manually",
+        "remove_cover": "Remove Cover"
+        }
+    },
+    "import_xml_config": {
+        "title": "Import XML Configuration",
+        "description": "Paste the new XML content here to update the configuration.",
+        "data": {
+        "xml_content": "XML Content"
         }
     },
     "detect_cover_start": {
         "title": "Start Detection",
-        "description": "Click 'Submit' and then IMMEDIATELY operate your roller shutter (briefly Open and briefly Close) via the wall switch.\n\nThe system will listen for activity for 10 seconds."
+        "description": "Click 'Submit' and then IMMEDIATELY operate your cover (briefly Open and Close) via the wall switch.\n\nThe system listens for activity for 10 seconds."
+    },
+    "detect_listening": {
+        "title": "Listening...",
+        "description": "Operate your cover switch now!"
     },
     "detect_confirm": {
-        "title": "Roller Shutter Found!",
+        "title": "Cover Found!",
         "description": "Activity detected on relays {r1} and {r2}. Verify and assign a name.",
         "data": {
         "cover_name": "Name (e.g. Kitchen)",
@@ -48,25 +73,23 @@
         }
     },
     "detect_failed": {
-        "title": "Detection Failed",
-        "description": "No or insufficient activity detected. Ensure you physically operate the switch while the wizard is running."
+        "title": "Failed",
+        "description": "No activity detected. Please try again."
     },
     "add_cover_manual": {
-        "title": "Add Manually",
-        "description": "Enter the relay addresses manually.",
+        "title": "Manual",
         "data": {
         "cover_name": "Name",
-        "address_direction": "Direction Relay ID",
-        "address_power": "Power Relay ID",
-        "travel_time": "Travel time (seconds)",
-        "invert_direction": "Invert direction?"
+        "address_direction": "Direction ID",
+        "address_power": "Power ID",
+        "travel_time": "Travel Time",
+        "invert_direction": "Invert?"
         }
     },
     "remove_cover": {
-        "title": "Remove Roller Shutter",
-        "description": "Select the roller shutter you want to remove.",
+        "title": "Remove",
         "data": {
-        "cover_name": "Choose Roller Shutter"
+        "cover_name": "Select Cover"
         }
     }
     },
