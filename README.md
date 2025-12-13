@@ -29,7 +29,7 @@ The easiest way to install and keep updated.
 
 1.  Open **HACS** in Home Assistant.
 2.  Go to **Integrations** > Top right menu > **Custom repositories**.
-3.  Add this URL: `https://github.com/JOUW_GITHUB_NAAM/ha-easyplus-apex`
+3.  Add this URL: `https://github.com/Livyon/ha-easyplus-apex`
 4.  Category: **Integration**.
 5.  Click **Download**.
 6.  **Restart** Home Assistant.
