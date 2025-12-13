@@ -6,6 +6,7 @@
   "codeowners": "https://github.com/Livyon",
   "requirements": [], 
   "iot_class": "local_push", 
-  "version": "0.1.3", 
+  "version": "0.1.4", 
   "config_flow": true 
 }
+
