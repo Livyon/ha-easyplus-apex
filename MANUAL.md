@@ -1,90 +1,100 @@
-# 📖 User Manual - Easyplus Apex (Unofficial)
+# 📘 User Manual - Easyplus Apex (Unofficial)
 
-Welcome to the user guide. This integration allows you to choose between a **Smart XML Import** (recommended) or **Manual Auto-Discovery**.
+![Banner](https://capsule-render.vercel.app/api?type=waving&color=00a1f1&height=200&section=header&text=User%20Manual&fontSize=70&animation=fadeIn&fontAlignY=35&desc=Installation%20&%20Configuration%20Guide&descAlignY=55&descAlign=50)
 
----
-
-## 1. Initial Setup & Connection
-
-1.  Go to **Settings** > **Devices & Services**.
-2.  Click **Add Integration** and search for **Easyplus Apex (Unofficial)**.
-3.  Enter your Controller details:
-    * **IP Address** (e.g., `192.168.1.***`)
-    * **Port** (Default: `2024`)
-    * **Password**
-4.  Click **Submit**.
-
-You will now be presented with a **Configuration Method** menu.
+> [!TIP]
+> **Quick Start:** Most users should choose **Method A (XML Import)** for the fastest and cleanest setup.
 
 ---
 
-## 2. Method A: Import XML File (Recommended) 🏆
+## 1. Initial Connection 🔌
 
-This is the cleanest and fastest way. It reads your original Apex configuration to determine names, device types (Dimmer vs Switch), and Shutters.
+First, we need to establish a link between Home Assistant and your Controller.
 
-### 📤 Step 1: Get your XML
-1.  Open the **Easyplus configuration software** on your PC.
-2.  Go to the **GUI / Apps** tab.
-3.  Click on **Get the EasyLink Configuration** (or Export XML).
-4.  Open the saved `.xml` file with Notepad (or any text editor).
-5.  **Select All** (Ctrl+A) and **Copy** (Ctrl+C).
+1.  Navigate to **Settings** > **Devices & Services**.
+2.  Click **Add Integration** and search for `Easyplus Apex`.
+3.  Enter your credentials:
 
-### 📥 Step 2: Import in Home Assistant
-1.  In the Home Assistant setup menu, select **Import XML File**.
-2.  **Paste** the content of your XML file into the text box.
-3.  Click **Submit**.
-
-> **Result:** Home Assistant will restart the integration. 
-> * ✅ Real room names (e.g., "Kitchen") are applied automatically.
-> * ✅ Shutters are created automatically.
-> * ✅ Unused/Generic relays (e.g., "relay 85") are **ignored** to keep your system clean.
-
-### ⚠️ Note on Shutters & Direction
-The XML import assumes standard wiring. If a shutter moves in the wrong direction (Up = Down):
-1.  Go to **Configure** > **Remove Cover** and delete that specific shutter.
-2.  Go to **Configure** > **Add Manually**.
-3.  Re-add the shutter using the same ID, but check the **"Invert Direction"** box.
-*(Alternatively: Swap the black and brown wires in your physical wall box for a permanent fix).*
+| Field | Value |
+| :--- | :--- |
+| **IP Address** | Your local IP (e.g., `192.168.1.xxx`) |
+| **Port** | `2024` (Default) |
+| **Password** | Your User or Admin password |
 
 ---
 
-## 3. Method B: Auto-Discovery (No XML)
+## 2. Configuration Methods ⚙️
 
-Use this method only if you do not have the original configuration file.
+You will be presented with a choice. Choose the path that fits your situation.
 
-1.  Select **Auto-Discovery** in the setup menu.
-2.  The system will start empty.
-3.  **Walk to a room** and press a physical button.
-4.  The corresponding entity will appear in Home Assistant instantly as `switch.apex_relay_X`.
-5.  Click on the entity > **Settings** (cogwheel) > **Rename** it manually (e.g., to "Living Room Light").
+### 🏆 Method A: Smart XML Import (Recommended)
+*Best for: Clean installations, correct naming, automatic shutter detection.*
+
+> [!NOTE]
+> This method uses your original `config.xml` file to filter out unused "junk" relays and apply your custom room names instantly.
+
+**Step-by-Step:**
+
+1.  **Export:** Open the **Easyplus PC Software** -> Go to **GUI/Apps** -> Click **Get EasyLink Configuration**.
+2.  **Copy:** Open the saved `.xml` file in Notepad. Press `Ctrl+A` (Select All) and `Ctrl+C` (Copy).
+3.  **Paste:** In Home Assistant, select **Import XML File** and paste the content.
+4.  **Done:** The integration will restart with your full configuration loaded.
+
+### 🧭 Method B: Auto-Discovery
+*Best for: Users without access to the original configuration file.*
+
+1.  Select **Auto-Discovery** during setup.
+2.  The system starts **empty** to keep it clean.
+3.  **Discovery by Use:** Walk to a room, press a physical switch, and the device will appear in Home Assistant instantly.
+4.  **Rename:** Click on the new entity to give it a friendly name.
 
 ---
 
-## 4. Managing Shutters (Covers)
+## 3. Managing Shutters (Covers) 🪟
 
-If you didn't use XML Import, or added a new motor later, use the **Wizard**.
+Easyplus shutters are complex, but this integration makes them easy to manage.
 
-### 🪄 The Discovery Wizard:
-1.  Go to **Settings** > **Devices & Services** > **Easyplus Apex** > **Configure**.
-2.  Select **"Detect Cover (Wizard)"**.
-3.  Click "Submit" and **IMMEDIATELY** walk to your wall switch.
-4.  Press **Open** briefly, then press **Close** briefly.
-5.  The wizard detects the relay usage and asks you to name the new shutter.
+### ✏️ Edit Cover (Direction & Time)
+Is your shutter moving **UP** when you press **DOWN**? Or does the progress bar not match reality?
 
-### 📝 Manual Add/Remove
-You can always manually add or remove shutters via the **Configure** menu if you know the Relay IDs (e.g., Direction ID 90, Power ID 91).
+> [!WARNING]
+> Do not delete the shutter! Use the built-in edit tool instead.
+
+1.  Go to **Settings** > **Devices** > **Easyplus Apex** > **Configure**.
+2.  Select the option: **"Edit Cover (Direction/Time)"**.
+3.  Select the shutter you want to fix.
+4.  Adjust the settings:
+    * ✅ **Invert Direction:** Check this to flip Up/Down controls.
+    * ⏱️ **Travel Time:** Enter the time (in seconds) it takes to fully open.
+5.  Click **Submit**.
+
+### 🪄 The Wizard (Add New)
+If you installed a new motor that isn't in your XML file yet:
+1.  Go to **Configure** -> Select **"Detect Cover (Wizard)"**.
+2.  Click Submit.
+3.  **Immediately** press the physical wall switch (Open, then Close).
+4.  The system detects the relays and creates the entity for you.
 
 ---
 
 ## ❓ Troubleshooting
 
-| Issue | Solution |
-| :--- | :--- |
-| **"Re +0" Names** | If your shutters appear as "Re +0", this means they were not named in the original Apex software. You can simply rename them in Home Assistant (Settings > Rename). |
-| **Missing Devices** | If using XML Import: Ensure the device has a name in the Apex software. Unnamed or "Junk" names are filtered out by default. |
-| **Entities Unavailable** | Check if the Apex controller has power. Reload the integration. |
-| **Wrong Direction** | See the "Note on Shutters & Direction" in section 2. |
+Having issues? Check the solutions below.
+
+| Problem | Possible Cause | Solution |
+| :--- | :--- | :--- |
+| **"Re +0" Names** | Missing name in Apex | The shutter has no name in the original software. Rename it manually in Home Assistant settings. |
+| **Missing Entities** | Strict Filtering | When using XML Import, devices without a name (or default names like "relay 85") are ignored to keep the list clean. |
+| **Grayed Out** | Connection Loss | Check if the Apex Controller is powered on and connected to the network. Reload the integration. |
+| **Wrong Direction** | Wiring | Use the **Edit Cover** tool in the configuration menu to invert the direction software-side. |
+
+> [!IMPORTANT]
+> **Restoring Missing Items:** If you accidentally deleted devices, simply go to **Configure** > **Import XML Config** and paste your XML file again. This restores everything without losing your custom settings.
 
 ---
 
-*Developed with ❤️ by Core Automations.*
+<div align="center">
+
+*Unofficial Integration developed by Core Automations* [Report an Issue](https://github.com/Livyon/ha-easyplus-apex/issues)
+
+</div>
