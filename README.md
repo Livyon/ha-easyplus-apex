@@ -3,7 +3,7 @@
 ![Banner](https://capsule-render.vercel.app/api?type=waving&color=00a1f1&height=200&section=header&text=Easyplus%20Apex&fontSize=70&animation=fadeIn&fontAlignY=35&desc=Unofficial%20Integration%20by%20Core%20Automations&descAlignY=55&descAlign=50)
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=for-the-badge&logo=home-assistant)](https://github.com/hacs/integration)
-[![version](https://img.shields.io/badge/version-1.3.1-blue.svg?style=for-the-badge&logo=github)](https://github.com/CoreAutomations/ha-easyplus-apex)
+[![version](https://img.shields.io/badge/version-0.1.4-blue.svg?style=for-the-badge&logo=github)](https://github.com/CoreAutomations/ha-easyplus-apex)
 [![maintainer](https://img.shields.io/badge/maintainer-Core%20Automations-green.svg?style=for-the-badge)](https://coreautomations.be)
 
 **Modernize your Easyplus Apex System.** This robust, local-push integration bridges the gap between existing Apex installations and the modern smart home world of Home Assistant.
