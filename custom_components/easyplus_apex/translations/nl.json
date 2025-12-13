@@ -40,7 +40,8 @@
     "init": {
         "title": "Beheer Easyplus",
         "menu_options": {
-        "import_xml_config": "Importeer XML Config (Update)",
+        "import_xml_config": "Importeer XML Config (Herstel)",
+        "edit_cover_select": "Pas Rolluik Aan (Richting/Tijd)",
         "detect_cover_start": "Detecteer Rolluik (Wizard)",
         "add_cover_manual": "Handmatig Toevoegen",
         "remove_cover": "Verwijder Rolluik"
@@ -48,14 +49,30 @@
     },
     "import_xml_config": {
         "title": "Importeer XML Configuratie",
-        "description": "Plak hier de nieuwe XML inhoud om de configuratie bij te werken.",
+        "description": "Plak hier de XML inhoud om de configuratie te herstellen of updaten.",
         "data": {
         "xml_content": "XML Inhoud"
         }
     },
+    "edit_cover_select": {
+        "title": "Kies Rolluik",
+        "description": "Selecteer het rolluik dat u wilt aanpassen.",
+        "data": { "cover_name": "Selecteer Rolluik" }
+    },
+    "edit_cover_config": {
+        "title": "Bewerk Instellingen",
+        "description": "Pas hier de richting of looptijd aan.",
+        "data": {
+        "cover_name": "Naam",
+        "address_direction": "Richting ID",
+        "address_power": "Stroom ID",
+        "travel_time": "Looptijd (seconden)",
+        "invert_direction": "Richting omkeren?"
+        }
+    },
     "detect_cover_start": {
         "title": "Start Detectie",
-        "description": "Klik op 'Verzenden' en bedien daarna DIRECT uw rolluik (even Open en even Dicht) via de muurschakelaar.\n\nHet systeem luistert 10 seconden naar activiteit."
+        "description": "Klik op 'Verzenden' en bedien daarna DIRECT uw rolluik."
     },
     "detect_listening": {
         "title": "Aan het luisteren...",
@@ -63,18 +80,18 @@
     },
     "detect_confirm": {
         "title": "Rolluik Gevonden!",
-        "description": "Activiteit gezien op relais {r1} en {r2}. Controleer en geef een naam.",
+        "description": "Bevestig de instellingen.",
         "data": {
-        "cover_name": "Naam (bv. Keuken)",
-        "address_direction": "Richting Relais ID",
-        "address_power": "Stroom Relais ID",
-        "travel_time": "Looptijd (seconden)",
-        "invert_direction": "Richting omkeren?"
+        "cover_name": "Naam",
+        "address_direction": "Richting ID",
+        "address_power": "Stroom ID",
+        "travel_time": "Looptijd",
+        "invert_direction": "Omkeren?"
         }
     },
     "detect_failed": {
         "title": "Mislukt",
-        "description": "Geen activiteit gezien. Probeer opnieuw."
+        "description": "Geen activiteit gezien."
     },
     "add_cover_manual": {
         "title": "Handmatig",
@@ -92,7 +109,7 @@
     }
     },
     "error": {
-    "too_few_relays": "Te weinig relais gezien (<2). Bedien zowel Open als Dicht."
+    "too_few_relays": "Te weinig relais gezien."
     }
 }
 }
