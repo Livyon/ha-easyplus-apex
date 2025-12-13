@@ -40,7 +40,8 @@
     "init": {
         "title": "Manage Easyplus",
         "menu_options": {
-        "import_xml_config": "Import XML Config (Update)",
+        "import_xml_config": "Import XML Config (Restore/Update)",
+        "edit_cover_select": "Edit Cover (Direction/Time)",
         "detect_cover_start": "Detect Cover (Wizard)",
         "add_cover_manual": "Add Manually",
         "remove_cover": "Remove Cover"
@@ -48,14 +49,30 @@
     },
     "import_xml_config": {
         "title": "Import XML Configuration",
-        "description": "Paste the new XML content here to update the configuration.",
+        "description": "Paste the XML content here to restore missing entities or update the configuration.",
         "data": {
         "xml_content": "XML Content"
         }
     },
+    "edit_cover_select": {
+        "title": "Select Cover",
+        "description": "Choose the cover you want to modify.",
+        "data": { "cover_name": "Select Cover" }
+    },
+    "edit_cover_config": {
+        "title": "Edit Settings",
+        "description": "Adjust the travel time or invert the direction here.",
+        "data": {
+        "cover_name": "Name",
+        "address_direction": "Direction Relay ID",
+        "address_power": "Power Relay ID",
+        "travel_time": "Travel time (seconds)",
+        "invert_direction": "Invert direction?"
+        }
+    },
     "detect_cover_start": {
         "title": "Start Detection",
-        "description": "Click 'Submit' and then IMMEDIATELY operate your cover (briefly Open and Close) via the wall switch.\n\nThe system listens for activity for 10 seconds."
+        "description": "Click 'Submit' and then IMMEDIATELY operate your cover (briefly Open and Close) via the wall switch."
     },
     "detect_listening": {
         "title": "Listening...",
@@ -63,9 +80,9 @@
     },
     "detect_confirm": {
         "title": "Cover Found!",
-        "description": "Activity detected on relays {r1} and {r2}. Verify and assign a name.",
+        "description": "Activity detected. Confirm settings.",
         "data": {
-        "cover_name": "Name (e.g. Kitchen)",
+        "cover_name": "Name",
         "address_direction": "Direction Relay ID",
         "address_power": "Power Relay ID",
         "travel_time": "Travel time (seconds)",
@@ -77,7 +94,7 @@
         "description": "No activity detected. Please try again."
     },
     "add_cover_manual": {
-        "title": "Manual",
+        "title": "Manual Add",
         "data": {
         "cover_name": "Name",
         "address_direction": "Direction ID",
@@ -87,14 +104,12 @@
         }
     },
     "remove_cover": {
-        "title": "Remove",
-        "data": {
-        "cover_name": "Select Cover"
-        }
+        "title": "Remove Cover",
+        "data": { "cover_name": "Select Cover" }
     }
     },
     "error": {
-    "too_few_relays": "Too few relays detected (<2). Operate both Open and Close."
+    "too_few_relays": "Too few relays detected (<2)."
     }
 }
 }
