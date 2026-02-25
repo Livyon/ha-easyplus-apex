@@ -11,7 +11,7 @@
 Developed by **Core Automations**, designed for stability and ease of use.
 
 
-**📢 Latest Update (February 2026) - v0.1.8 is Live!**
+**📢 Latest Update (February 2026) - v0.1.5 is Live!**
 
 > * **HACS Installation Fixed:** We've resolved the infinite loading bug! You can now seamlessly download and update the integration directly via HACS without any hiccups.
 > * **Smarter Covers (`RestoreEntity`):** Shutters now remember their last known position after a Home Assistant restart. No more jumping to "closed" unexpectedly.
