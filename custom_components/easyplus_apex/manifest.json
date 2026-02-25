@@ -1,12 +1,11 @@
 {
+  "domain": "easyplus_apex",
+  "name": "Easyplus Apex (Unofficial)",
   "codeowners": ["@Livyon"],
   "config_flow": true,
   "documentation": "https://github.com/Livyon/ha-easyplus-apex",
-  "domain": "easyplus_apex",
   "iot_class": "local_push",
-  "issue_tracker": "https://github.com/Livyon/ha-easyplus-apex/issues",  
-  "name": "Easyplus Apex (Unofficial)",
+  "issue_tracker": "https://github.com/Livyon/ha-easyplus-apex/issues",
   "requirements": [],
-  "version": "0.1.5" 
+  "version": "0.1.5"
 }
-
