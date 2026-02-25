@@ -15,6 +15,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_call_later
+from homeassistant.helpers.restore_state import RestoreEntity
 
 from .const import (
     DOMAIN, CONF_COVERS, CONF_COVER_NAME, 
@@ -65,7 +66,7 @@ async def async_setup_entry(
         _LOGGER.info("Added %d Easyplus Apex covers from options", len(entities))
 
 
-class EasyplusCover(CoverEntity):
+class EasyplusCover(CoverEntity, RestoreEntity):
     """Representation of an Easyplus Apex Cover."""
 
     _attr_should_poll = False
@@ -122,7 +123,9 @@ class EasyplusCover(CoverEntity):
     @property
     def current_cover_position(self) -> int | None:
         if self._is_moving:
-            self._update_estimated_position()
+            self._update_estimated_position()          
+        if self._estimated_position is None:
+            return 50         
         return self._estimated_position
 
     @property
@@ -136,7 +139,8 @@ class EasyplusCover(CoverEntity):
     @property
     def is_closed(self) -> bool | None:
         pos = self.current_cover_position
-        if pos is None: return None
+        if pos is None: 
+            return False 
         return pos <= 5
 
     async def _set_direction_and_start(self, direction_value: int) -> bool:
@@ -306,24 +310,51 @@ class EasyplusCover(CoverEntity):
 
     async def _update_initial_state(self):
         await asyncio.sleep(2.0)
+        
         ctrl_state = self.coordinator.get_relay_state(self._control_addr)
+        dir_state = self.coordinator.get_relay_state(self._direction_addr)
+
         if ctrl_state == CONTROL_STOP:
-            self._estimated_position = 0
             self._assumed_state = STATE_STOPPED
+            if self._estimated_position is None:
+                self._estimated_position = 50
+                
         elif ctrl_state == CONTROL_START:
-            self._estimated_position = None
-            self._assumed_state = STATE_UNKNOWN
+            if dir_state == self._open_dir_val:
+                self._assumed_state = STATE_OPENING
+            elif dir_state == self._close_dir_val:
+                self._assumed_state = STATE_CLOSING
+            else:
+                self._assumed_state = STATE_UNKNOWN
+            
+            if self._estimated_position is None:
+                self._estimated_position = 50
+                
+            self._start_move_position = self._estimated_position
+            self._last_move_start_time = time.monotonic()
+
+        self.async_write_ha_state()
 
     async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        last_state = await self.async_get_last_state()
+        if last_state is not None:
+            if ATTR_POSITION in last_state.attributes:
+                self._estimated_position = last_state.attributes[ATTR_POSITION]
+            else:
+                self._estimated_position = None
+
         self.async_on_remove(
             self.coordinator.add_listener(f"relay_{self._direction_addr}", self._handle_coordinator_update)
         )
         self.async_on_remove(
             self.coordinator.add_listener(f"relay_{self._control_addr}", self._handle_coordinator_update)
         )
-        await self._update_initial_state()
+        
         self.async_write_ha_state()
+        self.hass.async_create_task(self._update_initial_state())
 
     @property
     def _is_moving(self) -> bool:
         return self._assumed_state in [STATE_OPENING, STATE_CLOSING]
+
