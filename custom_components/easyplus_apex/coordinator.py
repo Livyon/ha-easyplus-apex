@@ -78,43 +78,59 @@ class EasyplusCoordinator:
             if self._is_connected: return True
             if self._shutdown_requested: return False
             try:
+                _LOGGER.debug("Attempting to connect to %s:%s", self._host, self._port)
                 self._reader, self._writer = await asyncio.wait_for(
                     asyncio.open_connection(self._host, self._port), timeout=10
                 )
                 if await self._authenticate():
                     self._is_connected = True
+                    _LOGGER.info("Successfully connected to Easyplus Apex controller at %s:%s", self._host, self._port)
                     return True
                 else:
+                    _LOGGER.warning("Authentication failed, closing connection.")
                     await self.disconnect()
                     return False
-            except Exception:
+            except Exception as e:
+                _LOGGER.error("Connection error to %s:%s: %s", self._host, self._port, e)
                 await self.disconnect()
                 return False
 
     async def _authenticate(self) -> bool:
         try:
+            _LOGGER.debug("Authenticating...")
             ready = False
+            buffer = b""
             for _ in range(10):
-                line = await asyncio.wait_for(self._reader.readuntil(b'\n'), timeout=2)
-                if b">Ready" in line:
+                chunk = await asyncio.wait_for(self._reader.read(1024), timeout=2)
+                if not chunk: break
+                buffer += chunk
+                if b">Ready" in buffer:
                     ready = True
                     break
-            if not ready: return False
+            if not ready:
+                _LOGGER.error("Failed to receive '>Ready' prompt. Buffer: %s", buffer)                
+                return False
             self._writer.write(f"Pass {self._password}\n".encode('ascii'))
             await self._writer.drain()
             await asyncio.sleep(0.5)
             return not self._reader.at_eof()
-        except Exception: return False
+        except Exception as e:
+            _LOGGER.error("Exception during authentication: %s", e)
+            return False
 
     async def _receive_loop(self) -> None:
         try:
             while self._is_connected:
                 data = await self._reader.readuntil(b'\n')
                 line = data.decode('ascii', errors='ignore').strip()
-                if line: self._parse_line(line)
-        except Exception: pass
+                if line:
+                    _LOGGER.debug("Received: %s", line)
+                    self._parse_line(line)
+        except Exception as e:
+            _LOGGER.error("Error in receive loop: %s", e)
         finally:
             self._is_connected = False
+            _LOGGER.info("Receive loop stopped.")
 
     def _parse_line(self, line: str) -> None:
         if not line.startswith(">"): return
@@ -180,10 +196,13 @@ class EasyplusCoordinator:
         if not self._is_connected or not self._writer: return False
         async with self._send_lock:
             try:
+                _LOGGER.debug("Sending: %s", command)
                 self._writer.write(f"{command}\n".encode('ascii'))
                 await self._writer.drain()
                 return True
-            except Exception: return False
+            except Exception as e:
+                _LOGGER.error("Error sending command '%s': %s", command, e)
+                return False
 
     async def disconnect(self):
         self._is_connected = False
