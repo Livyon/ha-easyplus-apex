@@ -31,20 +31,27 @@ async def validate_input(host: str, port: int, password: str) -> dict[str, str]:
         reader, writer = await asyncio.wait_for(
             asyncio.open_connection(host, port), timeout=10
         )
+        _LOGGER.debug("TCP connection established to %s:%s, waiting for banner...", host, port)        
 
         ready_received = False
+        buffer = b""        
         try:
             for _ in range(10): 
-                line_bytes = await asyncio.wait_for(reader.readuntil(b'\n'), timeout=2)
-                line = line_bytes.decode('ascii').strip()
-                if line.lstrip().startswith(">Ready"):
+                chunk = await asyncio.wait_for(reader.read(1024), timeout=2)
+                if not chunk: break
+                buffer += chunk
+                _LOGGER.debug("Validation read buffer: %s", buffer)
+                if b">Ready" in buffer:
                     ready_received = True
                     break
             if not ready_received:
+                _LOGGER.error("Did not receive '>Ready'. Buffer: %s", buffer)                
                 raise CannotConnect("Did not receive '>Ready' prompt.")
         except Exception as e:
+            _LOGGER.error("Error reading banner: %s", e)            
             raise CannotConnect(f"Error reading banner: {e}")
 
+        _LOGGER.debug("Banner received, sending authentication payload...")        
         pass_cmd = f"Pass {password}\n"
         writer.write(pass_cmd.encode('ascii'))
         await writer.drain()
