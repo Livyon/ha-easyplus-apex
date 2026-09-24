@@ -11,12 +11,10 @@
 Developed by **Core Automations**, designed for stability and ease of use.
 
 
-**📢 Latest Update (February 2026) - v0.1.5 is Live!**
+**📢 Latest Update (September 2026) - v0.1.7 is Live!**
 
-> * **HACS Installation Fixed:** We've resolved the infinite loading bug! You can now seamlessly download and update the integration directly via HACS without any hiccups.
-> * **Smarter Covers (`RestoreEntity`):** Shutters now remember their last known position after a Home Assistant restart. No more jumping to "closed" unexpectedly.
-> * **Google Assistant Fix:** Eliminated the pesky *"Querying state is not supported"* log errors by implementing smart fallback states for covers.
-> * **Optimized Startup:** Initial hardware state checks now run smoothly in the background, keeping your Home Assistant startup lightning fast.
+> * **Robuustere TCP-verbinding:** Overschakeling naar chunk-based inlezen van netwerkverkeer. De integratie hangt niet meer vast als de controller geen newline (\n) verstuurt na de prompt, wat zorgt voor een snellere en betrouwbaardere setup.
+> * **Uitgebreide Logging:** Volledige integratie van _LOGGER events (debug & error) in zowel de netwerk-setup (config_flow.py) als de actieve datastroom (coordinator.py). Netwerk- en authenticatieproblemen zijn nu direct traceerbaar via de log-viewer in Home Assistant.
 > 
 > *Make sure to hit **Update information** in HACS to grab the latest version!*
 
