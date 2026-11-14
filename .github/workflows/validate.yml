@@ -1,0 +1,147 @@
+name: Validate & Test
+
+on:
+  push:
+    branches:
+      - main
+      - beta
+      - dev
+  pull_request:
+    branches:
+      - main
+      - beta
+      - dev
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  syntax-and-metadata:
+    name: Syntax, Lint & Beta Policy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install lint tools
+        run: pip install ruff pyyaml
+
+      - name: Run Ruff critical syntax & undefined-name checks
+        run: ruff check custom_components/easyplus_apex tests --select E9,F63,F7,F82
+
+      - name: Run Ruff full lint check (advisory)
+        continue-on-error: true
+        run: ruff check custom_components/easyplus_apex tests
+
+      - name: Validate JSON, YAML, Translations & Beta Version Policy
+        env:
+          GITHUB_BASE_REF: ${{ github.base_ref }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+        run: |
+          python3 - << 'EOF'
+          import json
+          import os
+          import pathlib
+          import re
+          import sys
+          import yaml
+
+          errors = []
+
+          for path in sorted(pathlib.Path(".").rglob("*.json")):
+              try:
+                  json.loads(path.read_text(encoding="utf-8"))
+                  print(f"OK JSON: {path}")
+              except Exception as err:
+                  errors.append(f"Invalid JSON in {path}: {err}")
+
+          for path in sorted(pathlib.Path(".github").rglob("*.y*ml")):
+              try:
+                  yaml.safe_load(path.read_text(encoding="utf-8"))
+                  print(f"OK YAML: {path}")
+              except Exception as err:
+                  errors.append(f"Invalid YAML in {path}: {err}")
+
+          manifest_path = pathlib.Path("custom_components/easyplus_apex/manifest.json")
+          manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+          version = str(manifest.get("version", ""))
+
+          if not re.match(r"^\d+\.\d+\.\d+((a|b|rc)\d+|-?(alpha|beta|rc)\.\d+)?$", version):
+              errors.append(f"Invalid manifest version format: '{version}'")
+
+          target = os.environ.get("GITHUB_BASE_REF") or os.environ.get("GITHUB_REF_NAME", "")
+          is_prerelease = bool(re.search(r"(a|b|rc|alpha|beta|dev)", version, re.IGNORECASE))
+          if target == "main" and is_prerelease:
+              errors.append(
+                  f"Pre-release version '{version}' is not allowed on 'main'. Target 'beta' or bump to stable."
+              )
+
+          if errors:
+              for err in errors:
+                  print(f"::error::{err}")
+              sys.exit(1)
+
+          print(f"Metadata & version check passed: {version} (target: {target})")
+          EOF
+
+  hassfest:
+    name: Hassfest Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Run Hassfest
+        uses: home-assistant/actions/hassfest@master
+
+  hacs:
+    name: HACS Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Run HACS Action
+        uses: hacs/action@main
+        with:
+          category: "integration"
+          comment: false
+
+  tests:
+    name: Functional Tests (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: "HA Stable (Python 3.13)"
+            python-version: "3.13"
+            pip-flags: ""
+            experimental: false
+          - name: "HA Beta Awareness (Python 3.14)"
+            python-version: "3.14"
+            pip-flags: "--pre"
+            experimental: true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install test dependencies
+        run: |
+          pip install --upgrade pip
+          pip install ${{ matrix.pip-flags }} pytest pytest-asyncio pytest-homeassistant-custom-component
+
+      - name: Run pytest
+        run: pytest tests -v --tb=short
