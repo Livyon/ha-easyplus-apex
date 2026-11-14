@@ -97,15 +97,20 @@ class EasyplusButtonEvent(EventEntity):
             self._long_fired = False
             self._cancel_long_timer()
             self._cancel_long = async_call_later(self.hass, LONG_PRESS_TIME, self._long_press)
-            self._trigger_event(EVENT_PRESS, attrs)
+            self._fire(EVENT_PRESS, attrs)
         else:
             if not self._pressed:
                 return  # OFF zonder voorafgaande ON (bv. na herverbinden)
             self._pressed = False
             self._cancel_long_timer()
-            self._trigger_event(EVENT_RELEASE, attrs)
+            self._fire(EVENT_RELEASE, attrs)
             if not self._long_fired:
-                self._trigger_event(EVENT_SHORT_PRESS, attrs)
+                self._fire(EVENT_SHORT_PRESS, attrs)
+
+    @callback
+    def _fire(self, event_type: str, attrs: dict) -> None:
+        # Elk event apart wegschrijven, anders ziet een automatisering enkel het laatste
+        self._trigger_event(event_type, attrs)
         self.async_write_ha_state()
 
     @callback
@@ -113,8 +118,7 @@ class EasyplusButtonEvent(EventEntity):
         self._cancel_long = None
         if self._pressed:
             self._long_fired = True
-            self._trigger_event(EVENT_LONG_PRESS, {"input": self._address})
-            self.async_write_ha_state()
+            self._fire(EVENT_LONG_PRESS, {"input": self._address})
 
     @callback
     def _cancel_long_timer(self) -> None:
