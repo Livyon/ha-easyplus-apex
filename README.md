@@ -30,6 +30,30 @@ Developed by **Core Automations**, designed for stability and ease of use.
 | **⚙️ Easy Management** | Built-in tools to **Edit Covers** (invert direction/change duration) or run the **Discovery Wizard** without touching code. |
 | **⚡️ Instant Updates** | Uses a local TCP push connection. When you press a button, Home Assistant updates instantly (0ms delay). |
 
+## 🔘 Pushbuttons (event entities)
+
+Every pushbutton / digital input (`>DigitalIn n,ON|OFF`) becomes an **event entity** (named `Apex Input <n>`, e.g. `event.easyplus_apex_input_69`; device class *button*).
+Inputs are created the first time they are pressed (they are usually not part of the XML export; `<digin>` names are used when present) and are restored from the entity registry after a restart.
+
+| Event type | When |
+| :--- | :--- |
+| `press` | Button pressed |
+| `release` | Button released |
+| `short_press` | Released within 0.8 s |
+| `long_press` | Held for 0.8 s (fires while still held) |
+
+Example automation:
+
+```yaml
+triggers:
+  - trigger: state
+    entity_id: event.easyplus_apex_input_69
+    attribute: event_type
+    to: short_press
+```
+
+A generic `easyplus_apex_input` event (`{"input": 69, "state": "on"}`) is also fired on the event bus for every input, handy for catch-all automations or finding out which input a button is.
+
 ## 🚀 Installation
 
 ### Option 1: HACS (Recommended)
