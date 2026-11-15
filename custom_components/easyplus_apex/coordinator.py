@@ -33,11 +33,14 @@ class EasyplusCoordinator:
         # Discovery Sets
         self.known_relays: set[int] = set()
         self.known_dimmers: set[int] = set()
+        self.known_inputs: set[int] = set()
 
         # Listeners
         self._listeners: dict[str, list] = {}
         self._new_relay_callbacks = []
         self._new_dimmer_callbacks = []
+        self._new_input_callbacks = []
+        self._input_listeners: dict[int, list] = {}
         
         # Tijdelijke listeners voor de "Discovery by Use" wizard
         self._activity_callbacks = []
@@ -72,6 +75,9 @@ class EasyplusCoordinator:
 
     def listen_for_new_dimmers(self, callback_func):
         self._new_dimmer_callbacks.append(callback_func)
+
+    def listen_for_new_inputs(self, callback_func):
+        self._new_input_callbacks.append(callback_func)
 
     async def connect(self) -> bool:
         async with self._connect_lock:
@@ -144,6 +150,9 @@ class EasyplusCoordinator:
             elif cmd == "AnalogOut":
                 p = params.split(',')
                 if len(p) == 2: self._update_dimmer_state(int(p[0]), int(p[1]))
+            elif cmd == "DigitalIn":
+                p = params.split(',')
+                if len(p) == 2: self._handle_input(int(p[0]), p[1] == "ON")
         except Exception: pass
 
     def _update_relay_state(self, address: int, state: bool):
@@ -174,6 +183,25 @@ class EasyplusCoordinator:
         if self._dimmer_states.get(address) != value:
             self._dimmer_states[address] = value
             self._notify_listeners(f"dimmer_{address}")
+
+    def _handle_input(self, address: int, pressed: bool):
+        """Een drukknop (digitale ingang) werd ingedrukt of losgelaten."""
+        # 1. Generiek HA event, bruikbaar voor automatiseringen op eender welke ingang
+        self.hass.bus.async_fire(
+            f"{DOMAIN}_input", {"input": address, "state": "on" if pressed else "off"}
+        )
+
+        # 2. Discovery: maak een event entiteit aan bij het eerste gebruik
+        if address not in self.known_inputs:
+            self.known_inputs.add(address)
+            for cb in self._new_input_callbacks: cb(address)
+
+        # 3. Stuur door naar de event entiteit van deze ingang
+        for cb in list(self._input_listeners.get(address, [])): cb(pressed)
+
+    def add_input_listener(self, address: int, callback_func):
+        self._input_listeners.setdefault(address, []).append(callback_func)
+        return lambda: self._input_listeners[address].remove(callback_func)
 
     def get_relay_state(self, address: int) -> bool | None:
         return self._relay_states.get(address)

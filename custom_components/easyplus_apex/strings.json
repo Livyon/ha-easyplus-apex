@@ -111,5 +111,22 @@
     "error": {
       "too_few_relays": "Te weinig relais gezien."
     }
+  },
+  "entity": {
+    "event": {
+      "pushbutton": {
+        "name": "Drukknop",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "press": "Ingedrukt",
+              "release": "Losgelaten",
+              "short_press": "Kort ingedrukt",
+              "long_press": "Lang ingedrukt"
+            }
+          }
+        }
+      }
+    }
   }
 }

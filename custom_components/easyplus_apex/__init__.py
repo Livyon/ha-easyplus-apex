@@ -14,11 +14,11 @@ from .const import (
     CONF_XML_CONTENT, CONF_COVERS, CONF_NAMING_MAP, 
     CONF_XML_SWITCHES, CONF_XML_DIMMERS,
     CONF_COVER_NAME, CONF_ADDR_DIR, CONF_ADDR_POWER, 
-    CONF_TRAVEL_TIME, CONF_STRICT_MODE
+    CONF_TRAVEL_TIME, CONF_STRICT_MODE, CONF_INPUT_NAMES
 )
 from .coordinator import EasyplusCoordinator
 
-PLATFORMS: list[Platform] = [Platform.SWITCH, Platform.LIGHT, Platform.COVER]
+PLATFORMS: list[Platform] = [Platform.SWITCH, Platform.LIGHT, Platform.COVER, Platform.EVENT]
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -71,6 +71,7 @@ async def parse_and_apply_xml(hass: HomeAssistant, entry: ConfigEntry):
     new_options = dict(entry.options)
     
     naming_map = {}
+    input_names = {}
     covers = []
     
     # AANGEPAST: Gebruik 'set' in plaats van 'list' om dubbele adressen te voorkomen
@@ -81,6 +82,15 @@ async def parse_and_apply_xml(hass: HomeAssistant, entry: ConfigEntry):
         root = ET.fromstring(xml_content)
         
         for item in root.iter():
+            if item.tag == 'digin':
+                # Drukknoppen / digitale ingangen: enkel de naam bijhouden
+                try:
+                    name = item.get('name', "").strip()
+                    if name and not JUNK_NAME_PATTERN.match(name):
+                        input_names[str(int(item.get('adr')))] = name
+                except (ValueError, TypeError):
+                    pass
+                continue
             if item.tag not in ['digout', 'dim']:
                 continue
 
@@ -123,6 +133,7 @@ async def parse_and_apply_xml(hass: HomeAssistant, entry: ConfigEntry):
                 continue
 
         new_options[CONF_NAMING_MAP] = naming_map
+        new_options[CONF_INPUT_NAMES] = input_names
         new_options[CONF_COVERS] = covers
         # AANGEPAST: Converteer sets terug naar lijsten voor opslag in JSON
         new_options[CONF_XML_SWITCHES] = list(valid_switches)
