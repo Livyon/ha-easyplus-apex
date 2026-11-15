@@ -41,6 +41,7 @@ class EasyplusCoordinator:
         self._new_dimmer_callbacks = []
         self._new_input_callbacks = []
         self._input_listeners: dict[int, list] = {}
+        self._pending_input_events: dict[int, list[bool]] = {}
         
         # Tijdelijke listeners voor de "Discovery by Use" wizard
         self._activity_callbacks = []
@@ -197,11 +198,21 @@ class EasyplusCoordinator:
             for cb in self._new_input_callbacks: cb(address)
 
         # 3. Stuur door naar de event entiteit van deze ingang
-        for cb in list(self._input_listeners.get(address, [])): cb(pressed)
+        listeners = list(self._input_listeners.get(address, []))
+        if listeners:
+            for cb in listeners: cb(pressed)
+        elif self._new_input_callbacks:
+            pending = self._pending_input_events.setdefault(address, [])
+            if len(pending) < 10:
+                pending.append(pressed)
 
     def add_input_listener(self, address: int, callback_func):
         self._input_listeners.setdefault(address, []).append(callback_func)
         return lambda: self._input_listeners[address].remove(callback_func)
+
+    def pop_pending_input_events(self, address: int) -> list[bool]:
+        """Haal gebufferde input-events op die binnenkwamen voor entity-registratie."""
+        return self._pending_input_events.pop(address, [])        
 
     def get_relay_state(self, address: int) -> bool | None:
         return self._relay_states.get(address)
