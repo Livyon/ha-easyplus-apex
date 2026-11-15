@@ -132,3 +132,5 @@ class EasyplusButtonEvent(EventEntity):
             self.coordinator.add_input_listener(self._address, self._handle_input)
         )
         self.async_on_remove(self._cancel_long_timer)
+        for pressed in self.coordinator.pop_pending_input_events(self._address):
+            self._handle_input(pressed)        
