@@ -111,5 +111,22 @@
     "error": {
     "too_few_relays": "Too few relays detected (<2)."
     }
-}
+},
+  "entity": {
+    "event": {
+      "pushbutton": {
+        "name": "Pushbutton",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "press": "Pressed",
+              "release": "Released",
+              "short_press": "Short press",
+              "long_press": "Long press"
+            }
+          }
+        }
+      }
+    }
+  }
 }

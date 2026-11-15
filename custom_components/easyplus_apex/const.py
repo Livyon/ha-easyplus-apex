@@ -17,3 +17,7 @@ CONF_NAMING_MAP = "naming_map"        # Opslag: {adres: "Naam"}
 CONF_STRICT_MODE = "strict_mode"      # Als True: negeer alles wat niet in XML staat
 CONF_XML_SWITCHES = "xml_switches" # Lijst van adressen die ECHT switches zijn
 CONF_XML_DIMMERS = "xml_dimmers"   # Lijst van adressen die ECHT dimmers zijn
+
+# Drukknoppen (digitale ingangen)
+CONF_INPUT_NAMES = "input_names"   # Opslag: {adres: "Naam"} uit <digin> in de XML
+LONG_PRESS_TIME = 0.8              # Seconden ingedrukt voor een "long_press"
