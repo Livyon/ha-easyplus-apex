@@ -1,9 +1,16 @@
 """Baseline functional & structural tests for Easyplus Apex."""
+from datetime import timedelta
 import json
 from pathlib import Path
+from unittest.mock import patch
 
-from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_PORT, Platform
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_PORT, EVENT_STATE_CHANGED, Platform
+from homeassistant.util import dt as dt_util
+from pytest_homeassistant_custom_component.common import (
+    MockConfigEntry,
+    async_capture_events,
+    async_fire_time_changed,
+)
 
 from custom_components.easyplus_apex import (
     PLATFORMS,
@@ -17,15 +24,18 @@ from custom_components.easyplus_apex.config_flow import (
 )
 from custom_components.easyplus_apex.const import (
     CONF_COVERS,
+    CONF_INPUT_NAMES,
     CONF_NAMING_MAP,
     CONF_STRICT_MODE,
     CONF_XML_CONTENT,
     CONF_XML_DIMMERS,
     CONF_XML_SWITCHES,
     DOMAIN,
+    LONG_PRESS_TIME,
 )
 from custom_components.easyplus_apex.coordinator import EasyplusCoordinator
 from custom_components.easyplus_apex.cover import EasyplusCover
+from custom_components.easyplus_apex.event import EasyplusButtonEvent
 from custom_components.easyplus_apex.light import EasyplusLight
 from custom_components.easyplus_apex.switch import EasyplusSwitch
 
@@ -54,6 +64,7 @@ def test_core_symbols_present():
     assert Platform.SWITCH in PLATFORMS
     assert Platform.LIGHT in PLATFORMS
     assert Platform.COVER in PLATFORMS
+    assert Platform.EVENT in PLATFORMS    
     assert callable(async_setup_entry)
     assert callable(async_unload_entry)
     assert callable(parse_and_apply_xml)
@@ -63,6 +74,7 @@ def test_core_symbols_present():
     assert EasyplusSwitch is not None
     assert EasyplusLight is not None
     assert EasyplusCover is not None
+    assert EasyplusButtonEvent is not None
 
 
 async def test_parse_and_apply_xml(hass):
@@ -73,6 +85,8 @@ async def test_parse_and_apply_xml(hass):
         <digout adr="2" name="Re +02" type="light" />
         <digout adr="10" name="Rolluik Keuken" type="shutter" />
         <dim adr="5" name="Eettafel Dimmer" type="dimmer" />
+        <digin adr="69" name="Voordeur Bel" />
+        <digin adr="70" name="In 70" />        
     </config>
     """
     entry = MockConfigEntry(
@@ -90,6 +104,7 @@ async def test_parse_and_apply_xml(hass):
     assert entry.options[CONF_XML_DIMMERS] == [5]
     assert entry.options[CONF_NAMING_MAP]["1"] == "Woonkamer Lamp"
     assert "2" not in entry.options[CONF_NAMING_MAP]
+    assert entry.options[CONF_INPUT_NAMES] == {"69": "Voordeur Bel"}
     assert len(entry.options[CONF_COVERS]) == 1
     assert entry.options[CONF_COVERS][0]["address_direction"] == 10
     assert entry.options[CONF_COVERS][0]["address_power"] == 11
@@ -101,15 +116,20 @@ def test_coordinator_protocol_parsing(hass):
         domain=DOMAIN,
         data={CONF_HOST: "127.0.0.1", CONF_PORT: 2024, CONF_PASSWORD: "pass"},
     )
+    bus_events = async_capture_events(hass, f"{DOMAIN}_input")
     coordinator = EasyplusCoordinator(hass, entry)
 
     coordinator._parse_line(">DigitalOut 12,ON")
     coordinator._parse_line(">AnalogOut 5,180")
+    coordinator._parse_line(">DigitalIn 69,ON")
 
     assert coordinator.get_relay_state(12) is True
     assert 12 in coordinator.known_relays
     assert coordinator.get_dimmer_state(5) == 180
     assert 5 in coordinator.known_dimmers
+    assert 69 in coordinator.known_inputs
+    assert len(bus_events) == 1
+    assert bus_events[0].data == {"input": 69, "state": "on"}    
 
 
 def test_cover_direction_inversion(hass):
@@ -126,3 +146,61 @@ def test_cover_direction_inversion(hass):
     assert (normal._open_dir_val, normal._close_dir_val) == (1, 0)
     assert (inverted._open_dir_val, inverted._close_dir_val) == (0, 1)
     assert normal.is_closed is False
+
+
+async def test_pushbutton_first_press_short_and_long(hass):
+    """Verify first-press discovery buffering, short_press, and long_press events."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={CONF_HOST: "127.0.0.1", CONF_PORT: 2024, CONF_PASSWORD: "pass"},
+        options={},
+    )
+    entry.add_to_hass(hass)
+
+    captured = async_capture_events(hass, EVENT_STATE_CHANGED)
+
+    with (
+        patch.object(EasyplusCoordinator, "connect", return_value=True),
+        patch.object(EasyplusCoordinator, "_receive_loop", return_value=None),
+        patch.object(EasyplusCoordinator, "fetch_initial_states", return_value=None),
+    ):
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+        coordinator: EasyplusCoordinator = hass.data[DOMAIN][entry.entry_id]
+
+        # 1. Regressietest: allereerste korte druk op een nog onbekende knop (69)
+        coordinator._parse_line(">DigitalIn 69,ON")
+        coordinator._parse_line(">DigitalIn 69,OFF")
+        await hass.async_block_till_done()
+
+        input_69_events = [
+            e.data["new_state"].attributes.get("event_type")
+            for e in captured
+            if e.data.get("entity_id", "").endswith("_69")
+            and e.data.get("new_state") is not None
+            and e.data["new_state"].attributes.get("event_type") is not None
+        ]
+        assert input_69_events == ["press", "release", "short_press"]
+
+        # 2. Long press flow op knop 70 (ingedrukt -> > 0.8s wachten -> losgelaten)
+        coordinator._parse_line(">DigitalIn 70,ON")
+        await hass.async_block_till_done()
+
+        async_fire_time_changed(hass, dt_util.utcnow() + timedelta(seconds=LONG_PRESS_TIME + 0.1))
+        await hass.async_block_till_done()
+
+        coordinator._parse_line(">DigitalIn 70,OFF")
+        await hass.async_block_till_done()
+
+        input_70_events = [
+            e.data["new_state"].attributes.get("event_type")
+            for e in captured
+            if e.data.get("entity_id", "").endswith("_70")
+            and e.data.get("new_state") is not None
+            and e.data["new_state"].attributes.get("event_type") is not None
+        ]
+        assert input_70_events == ["press", "long_press", "release"]
+
+        assert await hass.config_entries.async_unload(entry.entry_id)
+        await hass.async_block_till_done()    
